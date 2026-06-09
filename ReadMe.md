@@ -447,3 +447,314 @@
    ```
 
 ---
+# FRONTEND LAYER
+
+---
+
+## 1. Create React Application
+
+Command:
+```
+npx create-react-app appname
+```
+
+---
+
+## 2. Important Files
+
+```
+public/index.html
+src/App.js
+src/index.js
+```
+
+---
+
+## 3. Delete Unnecessary Files
+
+```
+logo.svg
+App.test.js
+reportWebVitals.js
+setupTests.js
+```
+
+---
+
+## 4. Run React Application
+
+Command:
+```
+npm start
+```
+
+---
+
+## 5. Install Packages
+
+Syntax:
+```
+npm install packagename
+```
+
+Examples:
+```
+npm install axios
+npm install react-router-dom
+```
+
+---
+
+## 6. App Layer — `src/App.js`
+
+Purpose:
+- Main component.
+- Contains all Routes.
+
+Example:
+```jsx
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/"         element={<Home />} />
+        <Route path="/login"    element={<Login />} />
+        <Route path="/register" element={<Register />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+```
+
+---
+
+## 7. Index Layer — `src/index.js`
+
+Purpose:
+- Entry point of React Application.
+- Renders App Component into HTML.
+
+Example:
+```jsx
+import ReactDOM from 'react-dom/client';
+import App from './App';
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+```
+
+---
+
+## 8. Components Layer — `src/components/`
+
+Purpose:
+- Store reusable UI pieces.
+
+Examples:
+```
+Navbar
+Footer
+Sidebar
+Button
+Header
+```
+
+---
+
+## 9. Pages Layer — `src/pages/`
+
+Purpose:
+- Store full application pages.
+
+Examples:
+```
+Home
+Login
+Register
+Dashboard
+Profile
+```
+
+---
+
+## 10. Context Layer — `src/context/`
+
+Purpose:
+- Global State Management.
+- Share data between components without prop drilling.
+
+Examples:
+```
+AuthContext
+UserContext
+ThemeContext
+```
+
+Create Context:
+```jsx
+import { createContext, useContext, useState } from 'react';
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+
+  return (
+    <AuthContext.Provider value={{ user, setUser }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => useContext(AuthContext);
+```
+
+Use in Component:
+```jsx
+const { user, setUser } = useAuth();
+```
+
+Wrap in `index.js`:
+```jsx
+root.render(
+  <AuthProvider>
+    <App />
+  </AuthProvider>
+);
+```
+
+---
+
+## 11. Services Layer — `src/services/`
+
+Purpose:
+- Connect Frontend to Backend.
+- Manage all API requests in one place.
+
+---
+
+## 12. Axios — Install
+
+```
+npm install axios
+```
+
+---
+
+## 13. Create Axios Instance — `src/services/api.js`
+
+Purpose:
+- Set base URL once.
+- Reuse across all API calls.
+
+Example:
+```js
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: 'http://localhost:5000'
+});
+```
+
+---
+
+## 14. Attach JWT Token — Interceptor
+
+Purpose:
+- Automatically attach token to every request.
+
+Example:
+```js
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  return config;
+});
+```
+
+---
+
+## 15. API Methods
+
+Example:
+```js
+export const authAPI = {
+  login: (email, password) =>
+    api.post('/auth/login', { email, password }),
+
+  register: (name, email, password) =>
+    api.post('/auth/register', { name, email, password })
+};
+```
+
+Use in Component:
+```js
+const response = await authAPI.login(email, password);
+localStorage.setItem('token', response.data.token);
+```
+
+---
+
+## 16. Types Layer — `src/types/` (TypeScript only)
+
+Purpose:
+- Define data structures using interfaces.
+
+Example:
+```ts
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+}
+```
+
+Use:
+```ts
+const [user, setUser] = useState<User | null>(null);
+```
+
+---
+
+## 17. Folder Structure
+
+```
+src/
+├── components/
+├── context/
+├── pages/
+├── services/
+├── types/
+├── App.tsx
+└── index.tsx
+```
+
+---
+
+## FLOW
+
+```
+User
+  |
+Page
+  |
+Component
+  |
+Service (Axios)
+  |
+Backend API
+  |
+Database
+  |
+Response
+  |
+React UI Update
+```
+
+---
