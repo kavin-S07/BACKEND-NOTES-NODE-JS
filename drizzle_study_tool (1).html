@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drizzle ORM Study Tool</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f1117;--surface:#1a1d27;--card:#1f2235;--border:#2e3148;--border-hi:#3d4166;
+  --text:#e8eaf0;--muted:#7b809a;--dim:#4a4f6a;
+  --blue-bg:#1a2340;--blue-text:#7eb3f8;--blue-bd:#2e4a80;
+  --teal-bg:#0f2820;--teal-text:#5cd5a5;--teal-bd:#1a5440;
+  --amber-bg:#2a1e08;--amber-text:#f0b429;--amber-bd:#5a3d10;
+  --coral-bg:#2a1410;--coral-text:#f08060;--coral-bd:#5a2820;
+  --purple-bg:#1e1535;--purple-text:#a07ef0;--purple-bd:#3d2870;
+  --pink-bg:#2a1020;--pink-text:#e070a0;--pink-bd:#5a2040;
+  --gray-bg:#1a1d27;--gray-text:#9098b0;--gray-bd:#2e3148;
+  --green-bg:#0f2218;--green-text:#5dba80;--green-bd:#1a4830;
+  --radius:8px;--font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono','Fira Code',monospace;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh}
+
+/* ── Header ── */
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:.9rem 1.5rem;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
+.logo{font-size:17px;font-weight:600;letter-spacing:-.02em}
+.logo span{color:var(--blue-text)}
+.hdr-right{margin-left:auto;font-size:12px;color:var(--muted);font-family:var(--mono)}
+
+/* ── Tab nav ── */
+.tab-nav{background:var(--surface);border-bottom:1px solid var(--border);display:flex;gap:0;overflow-x:auto;padding:0 1.5rem}
+.tab-nav::-webkit-scrollbar{height:3px}
+.tab-nav::-webkit-scrollbar-thumb{background:var(--border)}
+.tab-btn{padding:.75rem 1.1rem;font-size:13px;font-family:var(--font);font-weight:500;color:var(--muted);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;transition:all .15s}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--blue-text);border-bottom-color:var(--blue-text)}
+
+/* ── Sections ── */
+.section{display:none;max-width:820px;margin:0 auto;padding:1.5rem 1.5rem 3rem}
+.section.active{display:block}
+
+/* ── Flashcard section ── */
+.controls{display:flex;flex-direction:column;gap:10px;margin-bottom:1.25rem}
+.search-wrap{position:relative}
+.search-wrap i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--dim);font-size:16px}
+#search{width:100%;padding:10px 12px 10px 36px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:14px;font-family:var(--font);outline:none;transition:border-color .15s}
+#search::placeholder{color:var(--dim)}
+#search:focus{border-color:var(--blue-bd)}
+.cats{display:flex;gap:6px;flex-wrap:wrap}
+.cat-btn{padding:5px 12px;font-size:12px;font-family:var(--font);font-weight:500;border:1px solid var(--border);border-radius:20px;background:var(--surface);color:var(--muted);cursor:pointer;transition:all .15s}
+.cat-btn:hover{border-color:var(--border-hi);color:var(--text)}
+.cat-btn.active{background:var(--blue-bg);border-color:var(--blue-bd);color:var(--blue-text)}
+.progress-row{display:flex;align-items:center;gap:10px;margin-bottom:1.25rem}
+.prog-track{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,#3b82f6,#60a5fa);border-radius:2px;transition:width .4s ease;width:0%}
+.prog-text{font-size:12px;color:var(--muted);font-family:var(--mono);white-space:nowrap;min-width:80px;text-align:right}
+.flash-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.5rem;display:flex;flex-direction:column;gap:1rem;min-height:320px}
+.card-header{display:flex;align-items:center;justify-content:space-between}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;letter-spacing:.04em;text-transform:uppercase}
+.card-num{font-size:11px;color:var(--dim);font-family:var(--mono)}
+.known-tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--green-text);background:var(--green-bg);border:1px solid var(--green-bd);border-radius:20px;padding:2px 8px;font-weight:500}
+.method-name{font-size:26px;font-weight:600;color:var(--text);font-family:var(--mono);letter-spacing:-.03em}
+.field-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.syntax-box{background:var(--blue-bg);border:1px solid var(--blue-bd);border-radius:var(--radius);padding:10px 14px;font-family:var(--mono);font-size:13px;color:var(--blue-text);line-height:1.6;word-break:break-all}
+.example-box{background:#1a1f30;border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;font-family:var(--mono);font-size:13px;color:#c8d0e8;line-height:1.6;word-break:break-all}
+.sql-box{background:var(--green-bg);border:1px solid var(--green-bd);border-radius:var(--radius);padding:10px 14px;font-family:var(--mono);font-size:12px;color:var(--green-text);line-height:1.6;word-break:break-all}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:.5rem}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;font-size:13px;font-family:var(--font);font-weight:500;border-radius:var(--radius);cursor:pointer;border:1px solid;transition:all .15s}
+.btn-known{background:var(--green-bg);border-color:var(--green-bd);color:var(--green-text)}
+.btn-known:hover{filter:brightness(1.15)}
+.btn-known.is-known{opacity:.55}
+.btn-skip{background:var(--coral-bg);border-color:var(--coral-bd);color:var(--coral-text)}
+.btn-skip:hover{filter:brightness(1.15)}
+.btn-reset{background:var(--surface);border-color:var(--border);color:var(--muted)}
+.btn-reset:hover{border-color:var(--border-hi);color:var(--text)}
+.nav{display:flex;align-items:center;justify-content:space-between;margin-top:1.25rem;gap:8px}
+.nav-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;font-size:13px;font-family:var(--font);font-weight:500;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);cursor:pointer;transition:all .15s}
+.nav-btn:hover:not(:disabled){border-color:var(--border-hi);background:var(--card)}
+.nav-btn:disabled{opacity:.3;cursor:default}
+.nav-counter{font-size:13px;color:var(--muted);font-family:var(--mono)}
+.empty{text-align:center;padding:3rem 1rem;color:var(--muted)}
+.empty h3{font-size:18px;color:var(--text);margin-bottom:.5rem}
+
+/* ── Docs section ── */
+.doc-page h2{font-size:22px;font-weight:600;color:var(--text);margin:2rem 0 .75rem;padding-bottom:.5rem;border-bottom:1px solid var(--border)}
+.doc-page h2:first-child{margin-top:0}
+.doc-page h3{font-size:16px;font-weight:600;color:var(--blue-text);margin:1.5rem 0 .5rem}
+.doc-page h4{font-size:14px;font-weight:600;color:var(--amber-text);margin:1.25rem 0 .4rem}
+.doc-page p{font-size:14px;color:var(--muted);line-height:1.8;margin-bottom:.75rem}
+.doc-page ul,.doc-page ol{padding-left:1.25rem;margin-bottom:.75rem}
+.doc-page li{font-size:14px;color:var(--muted);line-height:1.8;margin-bottom:.25rem}
+.doc-page li strong{color:var(--text)}
+.doc-page strong{color:var(--text)}
+.doc-page code{font-family:var(--mono);font-size:12px;background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:1px 6px;color:var(--blue-text)}
+.doc-page pre{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.1rem;overflow-x:auto;margin:.75rem 0 1rem;position:relative}
+.doc-page pre code{background:none;border:none;padding:0;font-size:12.5px;color:#c8d0e8;line-height:1.7}
+.copy-btn{position:absolute;top:8px;right:8px;padding:3px 8px;font-size:11px;font-family:var(--font);background:var(--surface);border:1px solid var(--border);border-radius:4px;color:var(--muted);cursor:pointer;transition:all .15s}
+.copy-btn:hover{color:var(--text);border-color:var(--border-hi)}
+.copy-btn.copied{color:var(--green-text);border-color:var(--green-bd)}
+.doc-page blockquote{border-left:3px solid var(--blue-bd);padding:.5rem 1rem;background:var(--surface);border-radius:0 var(--radius) var(--radius) 0;margin:.75rem 0;font-size:13px;color:var(--muted)}
+.doc-page blockquote strong{color:var(--amber-text)}
+.doc-table{width:100%;border-collapse:collapse;margin:.75rem 0 1.25rem;font-size:13px}
+.doc-table th{text-align:left;padding:8px 12px;background:var(--surface);color:var(--muted);font-weight:600;font-size:11px;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border)}
+.doc-table td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--muted);vertical-align:top}
+.doc-table td:first-child{color:var(--text);font-family:var(--mono);font-size:12px}
+.doc-table tr:hover td{background:var(--surface)}
+.tip-box{background:var(--teal-bg);border:1px solid var(--teal-bd);border-radius:var(--radius);padding:.75rem 1rem;margin:.75rem 0;font-size:13px;color:var(--teal-text)}
+.warn-box{background:var(--amber-bg);border:1px solid var(--amber-bd);border-radius:var(--radius);padding:.75rem 1rem;margin:.75rem 0;font-size:13px;color:var(--amber-text)}
+
+/* ── Cheat sheet section ── */
+.cheat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:1.5rem}
+.cheat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem 1.1rem;transition:border-color .15s}
+.cheat-card:hover{border-color:var(--border-hi)}
+.cc-method{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px}
+.cc-syntax{font-family:var(--mono);font-size:11px;color:var(--blue-text);background:var(--blue-bg);border-radius:4px;padding:4px 8px;margin-bottom:6px;word-break:break-all}
+.cc-sql{font-family:var(--mono);font-size:11px;color:var(--green-text);background:var(--green-bg);border-radius:4px;padding:4px 8px;word-break:break-all}
+.cc-badge{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;margin-bottom:6px;letter-spacing:.05em;text-transform:uppercase}
+.sec-title{font-size:13px;font-weight:600;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin:1.5rem 0 .75rem;display:flex;align-items:center;gap:8px}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ── FAQ section ── */
+.faq-item{border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden}
+.faq-q{padding:1rem 1.1rem;font-size:14px;font-weight:500;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:space-between;background:var(--card);transition:background .15s}
+.faq-q:hover{background:var(--surface)}
+.faq-q i{color:var(--dim);transition:transform .2s;flex-shrink:0}
+.faq-q.open i{transform:rotate(180deg)}
+.faq-a{display:none;padding:1rem 1.1rem;border-top:1px solid var(--border);background:var(--surface);font-size:13px;color:var(--muted);line-height:1.8}
+.faq-a.open{display:block}
+.faq-a pre{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:.75rem 1rem;overflow-x:auto;margin:.5rem 0}
+.faq-a pre code{font-family:var(--mono);font-size:12px;color:#c8d0e8;line-height:1.7}
+.faq-a code{font-family:var(--mono);font-size:12px;background:var(--card);border:1px solid var(--border);border-radius:4px;padding:1px 5px;color:var(--blue-text)}
+
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+@media(max-width:600px){
+  .method-name{font-size:20px}
+  .cheat-grid{grid-template-columns:1fr}
+  .tab-btn{padding:.65rem .8rem;font-size:12px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Drizzle<span>ORM</span> Study</div>
+  <div class="hdr-right" id="hdr">0 / 39 known</div>
+</header>
+
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="showTab('flashcards',this)"><i class="ti ti-cards"></i> Flashcards</button>
+  <button class="tab-btn" onclick="showTab('cheatsheet',this)"><i class="ti ti-layout-grid"></i> Cheat Sheet</button>
+  <button class="tab-btn" onclick="showTab('setup',this)"><i class="ti ti-settings"></i> Setup Guide</button>
+  <button class="tab-btn" onclick="showTab('crud',this)"><i class="ti ti-database"></i> CRUD Examples</button>
+  <button class="tab-btn" onclick="showTab('patterns',this)"><i class="ti ti-code"></i> Patterns</button>
+  <button class="tab-btn" onclick="showTab('faq',this)"><i class="ti ti-help-circle"></i> FAQ</button>
+</div>
+
+<!-- ══════════════════════════════════════════════════ FLASHCARDS ══ -->
+<div id="tab-flashcards" class="section active">
+  <div class="controls">
+    <div class="search-wrap">
+      <i class="ti ti-search"></i>
+      <input id="search" type="text" placeholder="Search method, syntax, or SQL…" oninput="filterCards()">
+    </div>
+    <div class="cats">
+      <button class="cat-btn active" onclick="setCat('all',this)">All</button>
+      <button class="cat-btn" onclick="setCat('crud',this)">CRUD</button>
+      <button class="cat-btn" onclick="setCat('filter',this)">Filters</button>
+      <button class="cat-btn" onclick="setCat('query',this)">Query</button>
+      <button class="cat-btn" onclick="setCat('agg',this)">Aggregates</button>
+      <button class="cat-btn" onclick="setCat('join',this)">Joins</button>
+      <button class="cat-btn" onclick="setCat('adv',this)">Advanced</button>
+    </div>
+  </div>
+  <div class="progress-row">
+    <div class="prog-track"><div class="prog-fill" id="pf"></div></div>
+    <div class="prog-text" id="pt">0 / 39 known</div>
+  </div>
+  <div id="cardArea"></div>
+  <div class="nav">
+    <button class="nav-btn" id="prevBtn" onclick="move(-1)" disabled><i class="ti ti-arrow-left"></i> Prev</button>
+    <span class="nav-counter" id="ctr"></span>
+    <button class="nav-btn" id="nextBtn" onclick="move(1)">Next <i class="ti ti-arrow-right"></i></button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ CHEAT SHEET ══ -->
+<div id="tab-cheatsheet" class="section">
+  <div class="sec-title">CRUD Operations</div>
+  <div class="cheat-grid" id="cg-crud"></div>
+  <div class="sec-title">Filter &amp; Comparison</div>
+  <div class="cheat-grid" id="cg-filter"></div>
+  <div class="sec-title">Query Modifiers</div>
+  <div class="cheat-grid" id="cg-query"></div>
+  <div class="sec-title">Aggregates</div>
+  <div class="cheat-grid" id="cg-agg"></div>
+  <div class="sec-title">Joins</div>
+  <div class="cheat-grid" id="cg-join"></div>
+  <div class="sec-title">Advanced</div>
+  <div class="cheat-grid" id="cg-adv"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ SETUP GUIDE ══ -->
+<div id="tab-setup" class="section doc-page">
+  <h2>What is Drizzle ORM?</h2>
+  <p>Drizzle ORM is a <strong>TypeScript-first, SQL-like ORM</strong> for Node.js. Unlike Prisma (which abstracts SQL heavily) or raw <code>pg</code> (which gives no type safety), Drizzle sits in the sweet spot — you write queries that feel like SQL, but get full TypeScript inference throughout.</p>
+  <table class="doc-table">
+    <tr><th>Concept</th><th>What It Means</th></tr>
+    <tr><td>Schema</td><td>Define tables in TypeScript — Drizzle infers all types from them</td></tr>
+    <tr><td>Query Builder</td><td>Chain methods (<code>.select()</code>, <code>.where()</code>, <code>.join()</code>) to build SQL</td></tr>
+    <tr><td>Migrations</td><td>Drizzle generates SQL migration files from your schema changes</td></tr>
+    <tr><td>drizzle-kit</td><td>CLI tool for generating, running, and inspecting migrations</td></tr>
+  </table>
+
+  <h2>Prerequisites</h2>
+  <table class="doc-table">
+    <tr><th>Tool</th><th>Min Version</th><th>Notes</th></tr>
+    <tr><td>Node.js</td><td>18.x</td><td>LTS recommended</td></tr>
+    <tr><td>npm</td><td>9.x</td><td>or pnpm / yarn</td></tr>
+    <tr><td>PostgreSQL</td><td>14.x</td><td>Running locally or via Docker</td></tr>
+    <tr><td>TypeScript</td><td>5.x</td><td>Strict mode recommended</td></tr>
+  </table>
+  <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>docker run --name pg-dev -e POSTGRES_PASSWORD=secret -e POSTGRES_DB=myapp -p 5432:5432 -d postgres:16</code></pre>
+
+  <h2>Project Structure</h2>
+  <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>my-app/
+├── src/
+│   ├── db/
+│   │   ├── index.ts          # Database connection
+│   │   └── schema.ts         # Table definitions
+│   ├── repositories/
+│   │   └── userRepository.ts # Data access layer
+│   ├── routes/
+│   │   └── users.ts          # Express route handlers
+│   └── index.ts              # App entry point
+├── drizzle/                  # Auto-generated migration files
+├── drizzle.config.ts
+├── .env
+├── package.json
+└── tsconfig.json</code></pre>
+
+  <h2>Installation</h2>
+  <h3>1 — Init the project</h3>
+  <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>mkdir my-app && cd my-app
+npm init -y</code></pre>
+
+  <h3>2 — Install dependencies</h3>
+  <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code># Runtime
+npm install express drizzle-orm pg dotenv
+
+# Types
+npm install -D @types/express @types/pg typescript ts-node tsx
+
+# Drizzle CLI
+npm install -D drizzle-kit</code></pre>
+
+  <h3>3 — Configure TypeScript</h3>
+  <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>npx tsc --init</code></pre>
+  <p>Update <code>tsconfig.json</code>:</p>
+  <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020"],
+    "strict": true,
+    "esModuleInterop": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*", "drizzle.config.ts"]
+}</code></pre>
+
+  <h2>Environment Variables</h2>
+  <div class="warn-box">⚠️ Never commit <code>.env</code> to version control. Add it to <code>.gitignore</code>.</div>
+  <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>DATABASE_URL=postgresql://postgres:secret@localhost:5432/myapp
+PORT=3000
+NODE_ENV=development</code></pre>
+
+  <h2>Database Connection</h2>
+  <p>File: <code>src/db/index.ts</code></p>
+  <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
+import * as schema from "./schema";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+});
+
+export const db = drizzle(pool, { schema });
+export type DB = typeof db;</code></pre>
+
+  <h2>Schema Definition</h2>
+  <p>File: <code>src/db/schema.ts</code></p>
+  <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>import {
+  pgTable, serial, text, varchar, integer,
+  boolean, timestamp, pgEnum,
+} from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
+
+export const roleEnum = pgEnum("role", ["user", "admin", "manager"]);
+
+export const users = pgTable("users", {
+  id:        serial("id").primaryKey(),
+  name:      varchar("name", { length: 100 }).notNull(),
+  email:     varchar("email", { length: 255 }).notNull().unique(),
+  role:      roleEnum("role").default("user").notNull(),
+  age:       integer("age"),
+  isActive:  boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const posts = pgTable("posts", {
+  id:        serial("id").primaryKey(),
+  title:     text("title").notNull(),
+  body:      text("body"),
+  userId:    integer("user_id")
+               .references(() => users.id, { onDelete: "cascade" })
+               .notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const usersRelations = relations(users, ({ many }) => ({
+  posts: many(posts),
+}));
+
+export const postsRelations = relations(posts, ({ one }) => ({
+  author: one(users, { fields: [posts.userId], references: [users.id] }),
+}));
+
+// TypeScript types — inferred automatically from schema
+export type User    = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
+export type Post    = typeof posts.$inferSelect;
+export type NewPost = typeof posts.$inferInsert;</code></pre>
+  <div class="tip-box">💡 <strong>Key insight:</strong> <code>$inferSelect</code> and <code>$inferInsert</code> give you fully typed models for free — no separate interface definitions needed.</div>
+
+  <h2>Migrations</h2>
+  <p>File: <code>drizzle.config.ts</code></p>
+  <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>import type { Config } from "drizzle-kit";
+import dotenv from "dotenv";
+dotenv.config();
+
+export default {
+  schema: "./src/db/schema.ts",
+  out: "./drizzle",
+  dialect: "postgresql",
+  dbCredentials: { url: process.env.DATABASE_URL! },
+} satisfies Config;</code></pre>
+  <h3>Migration Commands</h3>
+  <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code># Generate migration SQL from schema
+npx drizzle-kit generate
+
+# Apply migrations to DB
+npx drizzle-kit migrate
+
+# Open visual DB browser
+npx drizzle-kit studio
+
+# Push schema directly (dev only)
+npx drizzle-kit push</code></pre>
+  <div class="tip-box">📌 Use <code>push</code> during early development. Switch to <code>generate</code> + <code>migrate</code> for production.</div>
+
+  <h2>NPM Scripts</h2>
+  <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>{
+  "scripts": {
+    "dev":         "tsx watch src/index.ts",
+    "build":       "tsc",
+    "start":       "node dist/index.js",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate":  "drizzle-kit migrate",
+    "db:push":     "drizzle-kit push",
+    "db:studio":   "drizzle-kit studio",
+    "db:seed":     "tsx src/db/seed.ts"
+  }
+}</code></pre>
+</div>
+
+<!-- ══════════════════════════════════════════════════ CRUD EXAMPLES ══ -->
+<div id="tab-crud" class="section doc-page">
+  <h2>Import Setup</h2>
+  <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>import { db } from "../db";
+import { users, posts } from "../db/schema";
+import { eq, and, or, gt, like, ilike, inArray, asc, desc, count, sql } from "drizzle-orm";</code></pre>
+
+  <h2>Create</h2>
+  <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>// Single insert — returns the inserted row
+const [newUser] = await db
+  .insert(users)
+  .values({ name: "Kavin", email: "kavin@gmail.com", age: 25 })
+  .returning();
+
+// Multiple insert
+const newUsers = await db
+  .insert(users)
+  .values([
+    { name: "Alice", email: "alice@gmail.com" },
+    { name: "Bob",   email: "bob@gmail.com"   },
+  ])
+  .returning();</code></pre>
+
+  <h2>Read</h2>
+  <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>// Select all
+const allUsers = await db.select().from(users);
+
+// Select specific columns
+const names = await db.select({ id: users.id, name: users.name }).from(users);
+
+// Select by ID
+const [user] = await db.select().from(users).where(eq(users.id, 1));
+
+// Multiple conditions
+const activeAdmins = await db
+  .select()
+  .from(users)
+  .where(and(eq(users.role, "admin"), eq(users.isActive, true)));
+
+// Case-insensitive search
+const results = await db
+  .select()
+  .from(users)
+  .where(ilike(users.name, "%kavin%"));
+
+// Pagination
+const page = 2, pageSize = 10;
+const paginated = await db
+  .select()
+  .from(users)
+  .orderBy(asc(users.createdAt))
+  .limit(pageSize)
+  .offset((page - 1) * pageSize);</code></pre>
+
+  <h2>Update</h2>
+  <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>// Update by ID
+const [updated] = await db
+  .update(users)
+  .set({ name: "John", updatedAt: new Date() })
+  .where(eq(users.id, 1))
+  .returning();
+
+// Conditional update
+await db
+  .update(users)
+  .set({ isActive: false })
+  .where(and(gt(users.age, 60), eq(users.role, "user")));</code></pre>
+
+  <h2>Delete</h2>
+  <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>// Delete by ID
+const [deleted] = await db
+  .delete(users)
+  .where(eq(users.id, 1))
+  .returning();
+
+// Delete multiple
+await db.delete(users).where(inArray(users.id, [1, 2, 3]));</code></pre>
+
+  <h2>Joins</h2>
+  <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>// Inner join
+const usersWithPosts = await db
+  .select({ userId: users.id, userName: users.name, postTitle: posts.title })
+  .from(users)
+  .innerJoin(posts, eq(users.id, posts.userId));
+
+// Left join (includes users with no posts)
+const all = await db
+  .select()
+  .from(users)
+  .leftJoin(posts, eq(users.id, posts.userId));</code></pre>
+
+  <h2>Aggregates &amp; Grouping</h2>
+  <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>// Count per role
+const roleStats = await db
+  .select({ role: users.role, total: count() })
+  .from(users)
+  .groupBy(users.role);
+
+// Average age
+const [{ avgAge }] = await db
+  .select({ avgAge: sql&lt;number&gt;`avg(${users.age})` })
+  .from(users)
+  .where(eq(users.isActive, true));</code></pre>
+
+  <h2>Transactions</h2>
+  <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>// All succeed or all roll back
+const result = await db.transaction(async (tx) => {
+  const [user] = await tx
+    .insert(users)
+    .values({ name: "Kavin", email: "kavin@gmail.com" })
+    .returning();
+
+  const [post] = await tx
+    .insert(posts)
+    .values({ title: "Hello World", userId: user.id })
+    .returning();
+
+  return { user, post };
+});</code></pre>
+
+  <h2>Express App Entry Point</h2>
+  <p>File: <code>src/index.ts</code></p>
+  <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>import express from "express";
+import dotenv from "dotenv";
+import usersRouter from "./routes/users";
+
+dotenv.config();
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.use(express.json());
+app.use("/users", usersRouter);
+app.get("/health", (_req, res) => res.json({ status: "ok" }));
+
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});</code></pre>
+</div>
+
+<!-- ══════════════════════════════════════════════════ PATTERNS ══ -->
+<div id="tab-patterns" class="section doc-page">
+  <h2>Repository Pattern</h2>
+  <p>Wrap Drizzle queries in a repository class to keep routes thin and logic reusable.</p>
+  <p>File: <code>src/repositories/userRepository.ts</code></p>
+  <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>import { eq, ilike, count } from "drizzle-orm";
+import { db } from "../db";
+import { users, type User, type NewUser } from "../db/schema";
+
+export class UserRepository {
+
+  async findAll(page = 1, limit = 10): Promise&lt;User[]&gt; {
+    return db.select().from(users)
+      .limit(limit)
+      .offset((page - 1) * limit)
+      .orderBy(users.createdAt);
+  }
+
+  async findById(id: number): Promise&lt;User | undefined&gt; {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async findByEmail(email: string): Promise&lt;User | undefined&gt; {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async search(query: string): Promise&lt;User[]&gt; {
+    return db.select().from(users)
+      .where(ilike(users.name, `%${query}%`));
+  }
+
+  async count(): Promise&lt;number&gt; {
+    const [{ total }] = await db.select({ total: count() }).from(users);
+    return total;
+  }
+
+  async create(data: NewUser): Promise&lt;User&gt; {
+    const [user] = await db.insert(users).values(data).returning();
+    return user;
+  }
+
+  async update(id: number, data: Partial&lt;NewUser&gt;): Promise&lt;User | undefined&gt; {
+    const [user] = await db
+      .update(users)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async delete(id: number): Promise&lt;boolean&gt; {
+    const [deleted] = await db
+      .delete(users).where(eq(users.id, id)).returning();
+    return !!deleted;
+  }
+}
+
+export const userRepository = new UserRepository();</code></pre>
+
+  <h2>Express Routes</h2>
+  <p>File: <code>src/routes/users.ts</code></p>
+  <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>import { Router, Request, Response } from "express";
+import { userRepository } from "../repositories/userRepository";
+
+const router = Router();
+
+// GET /users?page=1&limit=10&search=kavin
+router.get("/", async (req: Request, res: Response) => {
+  try {
+    const page  = Number(req.query.page)  || 1;
+    const limit = Number(req.query.limit) || 10;
+    const search = req.query.search as string | undefined;
+    const [data, total] = await Promise.all([
+      search ? userRepository.search(search) : userRepository.findAll(page, limit),
+      userRepository.count(),
+    ]);
+    res.json({ data, total, page, limit });
+  } catch { res.status(500).json({ error: "Failed to fetch users" }); }
+});
+
+// GET /users/:id
+router.get("/:id", async (req: Request, res: Response) => {
+  try {
+    const user = await userRepository.findById(Number(req.params.id));
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.json(user);
+  } catch { res.status(500).json({ error: "Failed to fetch user" }); }
+});
+
+// POST /users
+router.post("/", async (req: Request, res: Response) => {
+  try {
+    const { name, email, age, role } = req.body;
+    if (!name || !email) return res.status(400).json({ error: "name and email required" });
+    const existing = await userRepository.findByEmail(email);
+    if (existing) return res.status(409).json({ error: "Email already in use" });
+    const user = await userRepository.create({ name, email, age, role });
+    res.status(201).json(user);
+  } catch { res.status(500).json({ error: "Failed to create user" }); }
+});
+
+// PATCH /users/:id
+router.patch("/:id", async (req: Request, res: Response) => {
+  try {
+    const user = await userRepository.update(Number(req.params.id), req.body);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.json(user);
+  } catch { res.status(500).json({ error: "Failed to update user" }); }
+});
+
+// DELETE /users/:id
+router.delete("/:id", async (req: Request, res: Response) => {
+  try {
+    const deleted = await userRepository.delete(Number(req.params.id));
+    if (!deleted) return res.status(404).json({ error: "User not found" });
+    res.status(204).send();
+  } catch { res.status(500).json({ error: "Failed to delete user" }); }
+});
+
+export default router;</code></pre>
+
+  <h2>Debugging Tips</h2>
+  <h3>Log SQL queries</h3>
+  <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>export const db = drizzle(pool, {
+  schema,
+  logger: process.env.NODE_ENV === "development",
+});</code></pre>
+  <h3>Test connection</h3>
+  <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>import { sql } from "drizzle-orm";
+const [{ now }] = await db.execute(sql`SELECT NOW() as now`);
+console.log("Connected! DB time:", now);</code></pre>
+  <h3>Seed file</h3>
+  <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>// src/db/seed.ts
+import { db } from "./index";
+import { users } from "./schema";
+
+async function main() {
+  const result = await db.select().from(users).limit(5);
+  console.log(result);
+  process.exit(0);
+}
+
+main().catch(console.error);</code></pre>
+  <p>Run with: <code>npx tsx src/db/seed.ts</code></p>
+  <div class="tip-box">🔍 Open Drizzle Studio with <code>npx drizzle-kit studio</code> — browse tables and run queries visually at <code>http://localhost:4983</code>.</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ FAQ ══ -->
+<div id="tab-faq" class="section">
+  <div id="faqList"></div>
+</div>
+
+<script>
+/* ══ FLASHCARD DATA ══ */
+const CARDS = [
+  {cat:'crud',method:'db.select()',badge:'Read',bc:'blue',syntax:'db.select().from(table)',example:'db.select().from(users)',sql:'SELECT * FROM users;'},
+  {cat:'crud',method:'db.insert()',badge:'Create',bc:'teal',syntax:'db.insert(table).values({...})',example:'db.insert(users).values({ name: "Kavin" })',sql:"INSERT INTO users(name) VALUES ('Kavin');"},
+  {cat:'crud',method:'db.update()',badge:'Update',bc:'amber',syntax:'db.update(table).set({...}).where(cond)',example:'db.update(users).set({ name: "John" }).where(eq(users.id,1))',sql:"UPDATE users SET name='John' WHERE id=1;"},
+  {cat:'crud',method:'db.delete()',badge:'Delete',bc:'coral',syntax:'db.delete(table).where(condition)',example:'db.delete(users).where(eq(users.id,1))',sql:'DELETE FROM users WHERE id=1;'},
+  {cat:'filter',method:'.where()',badge:'Filter',bc:'purple',syntax:'.where(condition)',example:'.where(eq(users.id, 1))',sql:'WHERE id = 1'},
+  {cat:'filter',method:'eq()',badge:'Equal',bc:'purple',syntax:'eq(column, value)',example:'eq(users.email, "a@gmail.com")',sql:"email = 'a@gmail.com'"},
+  {cat:'filter',method:'ne()',badge:'Not Equal',bc:'purple',syntax:'ne(column, value)',example:'ne(users.role, "admin")',sql:"role != 'admin'"},
+  {cat:'filter',method:'gt()',badge:'Greater',bc:'purple',syntax:'gt(column, value)',example:'gt(users.age, 18)',sql:'age > 18'},
+  {cat:'filter',method:'gte()',badge:'Gte',bc:'purple',syntax:'gte(column, value)',example:'gte(users.age, 18)',sql:'age >= 18'},
+  {cat:'filter',method:'lt()',badge:'Less',bc:'purple',syntax:'lt(column, value)',example:'lt(users.age, 60)',sql:'age < 60'},
+  {cat:'filter',method:'lte()',badge:'Lte',bc:'purple',syntax:'lte(column, value)',example:'lte(users.age, 60)',sql:'age <= 60'},
+  {cat:'filter',method:'and()',badge:'Logic',bc:'pink',syntax:'and(cond1, cond2)',example:'and(eq(users.role,"user"), gt(users.age,18))',sql:"WHERE role='user' AND age > 18"},
+  {cat:'filter',method:'or()',badge:'Logic',bc:'pink',syntax:'or(cond1, cond2)',example:'or(eq(users.role,"admin"), eq(users.role,"manager"))',sql:"WHERE role='admin' OR role='manager'"},
+  {cat:'filter',method:'like()',badge:'Pattern',bc:'purple',syntax:'like(column, pattern)',example:'like(users.name, "%Ka%")',sql:"name LIKE '%Ka%'"},
+  {cat:'filter',method:'ilike()',badge:'Pattern',bc:'purple',syntax:'ilike(column, pattern)',example:'ilike(users.name, "%kavin%")',sql:"name ILIKE '%kavin%'"},
+  {cat:'filter',method:'inArray()',badge:'IN',bc:'purple',syntax:'inArray(column, values)',example:'inArray(users.id, [1,2,3])',sql:'id IN (1,2,3)'},
+  {cat:'filter',method:'notInArray()',badge:'NOT IN',bc:'purple',syntax:'notInArray(column, values)',example:'notInArray(users.id, [1,2])',sql:'id NOT IN (1,2)'},
+  {cat:'filter',method:'isNull()',badge:'Null',bc:'gray',syntax:'isNull(column)',example:'isNull(users.deletedAt)',sql:'deleted_at IS NULL'},
+  {cat:'filter',method:'isNotNull()',badge:'Not Null',bc:'gray',syntax:'isNotNull(column)',example:'isNotNull(users.email)',sql:'email IS NOT NULL'},
+  {cat:'filter',method:'between()',badge:'Range',bc:'purple',syntax:'between(column, min, max)',example:'between(users.age, 18, 30)',sql:'age BETWEEN 18 AND 30'},
+  {cat:'query',method:'.limit()',badge:'Query',bc:'blue',syntax:'.limit(number)',example:'.limit(10)',sql:'LIMIT 10'},
+  {cat:'query',method:'.offset()',badge:'Query',bc:'blue',syntax:'.offset(number)',example:'.offset(20)',sql:'OFFSET 20'},
+  {cat:'query',method:'.orderBy() asc',badge:'Sort',bc:'teal',syntax:'.orderBy(asc(column))',example:'.orderBy(asc(users.name))',sql:'ORDER BY name ASC'},
+  {cat:'query',method:'.orderBy() desc',badge:'Sort',bc:'teal',syntax:'.orderBy(desc(column))',example:'.orderBy(desc(users.createdAt))',sql:'ORDER BY created_at DESC'},
+  {cat:'query',method:'.groupBy()',badge:'Group',bc:'blue',syntax:'.groupBy(column)',example:'.groupBy(users.role)',sql:'GROUP BY role'},
+  {cat:'query',method:'.having()',badge:'Group',bc:'blue',syntax:'.having(condition)',example:'.having(gt(count(), 5))',sql:'HAVING COUNT(*) > 5'},
+  {cat:'query',method:'selectDistinct()',badge:'Query',bc:'blue',syntax:'db.selectDistinct().from(table)',example:'db.selectDistinct().from(users)',sql:'SELECT DISTINCT * FROM users;'},
+  {cat:'query',method:'.returning()',badge:'Result',bc:'teal',syntax:'.returning()',example:'db.insert(users).values({...}).returning()',sql:'RETURNING *'},
+  {cat:'agg',method:'count()',badge:'Aggregate',bc:'amber',syntax:'count() / count(column)',example:'db.select({ total: count() }).from(users)',sql:'SELECT COUNT(*) FROM users;'},
+  {cat:'agg',method:'sum()',badge:'Aggregate',bc:'amber',syntax:'sum(column)',example:'sum(food.calories)',sql:'SUM(calories)'},
+  {cat:'agg',method:'avg()',badge:'Aggregate',bc:'amber',syntax:'avg(column)',example:'avg(food.calories)',sql:'AVG(calories)'},
+  {cat:'agg',method:'max()',badge:'Aggregate',bc:'amber',syntax:'max(column)',example:'max(food.weight)',sql:'MAX(weight)'},
+  {cat:'agg',method:'min()',badge:'Aggregate',bc:'amber',syntax:'min(column)',example:'min(food.weight)',sql:'MIN(weight)'},
+  {cat:'join',method:'.innerJoin()',badge:'Join',bc:'teal',syntax:'.innerJoin(table, condition)',example:'.innerJoin(posts, eq(users.id, posts.userId))',sql:'INNER JOIN posts ON users.id = posts.user_id'},
+  {cat:'join',method:'.leftJoin()',badge:'Join',bc:'teal',syntax:'.leftJoin(table, condition)',example:'.leftJoin(posts, eq(users.id, posts.userId))',sql:'LEFT JOIN posts ON users.id = posts.user_id'},
+  {cat:'join',method:'.rightJoin()',badge:'Join',bc:'teal',syntax:'.rightJoin(table, condition)',example:'.rightJoin(posts, eq(users.id, posts.userId))',sql:'RIGHT JOIN posts ON users.id = posts.user_id'},
+  {cat:'join',method:'.fullJoin()',badge:'Join',bc:'teal',syntax:'.fullJoin(table, condition)',example:'.fullJoin(posts, eq(users.id, posts.userId))',sql:'FULL JOIN posts ON users.id = posts.user_id'},
+  {cat:'adv',method:'db.transaction()',badge:'Advanced',bc:'pink',syntax:'db.transaction(async (tx) => { ... })',example:'await db.transaction(async (tx) => { await tx.insert(users)... })',sql:'BEGIN ... COMMIT'},
+  {cat:'adv',method:'db.execute(sql``)',badge:'Raw SQL',bc:'pink',syntax:'db.execute(sql`raw SQL`)',example:'db.execute(sql`SELECT NOW()`)',sql:'SELECT NOW();'},
+];
+
+const BC={
+  blue:  {bg:'var(--blue-bg)',  text:'var(--blue-text)',  bd:'var(--blue-bd)'},
+  teal:  {bg:'var(--teal-bg)',  text:'var(--teal-text)',  bd:'var(--teal-bd)'},
+  amber: {bg:'var(--amber-bg)', text:'var(--amber-text)', bd:'var(--amber-bd)'},
+  coral: {bg:'var(--coral-bg)', text:'var(--coral-text)', bd:'var(--coral-bd)'},
+  purple:{bg:'var(--purple-bg)',text:'var(--purple-text)',bd:'var(--purple-bd)'},
+  pink:  {bg:'var(--pink-bg)',  text:'var(--pink-text)',  bd:'var(--pink-bd)'},
+  gray:  {bg:'var(--gray-bg)',  text:'var(--gray-text)',  bd:'var(--gray-bd)'},
+};
+
+let filtered=[...CARDS],idx=0,known=new Set(),activeCat='all',searchQ='';
+const key=d=>d.cat+'_'+d.method;
+
+function render(){
+  const area=document.getElementById('cardArea');
+  if(!filtered.length){
+    area.innerHTML='<div class="empty"><h3>No methods found</h3><p>Try a different search or category</p></div>';
+    document.getElementById('ctr').textContent='';
+    document.getElementById('prevBtn').disabled=true;
+    document.getElementById('nextBtn').disabled=true;
+    return;
+  }
+  idx=Math.max(0,Math.min(filtered.length-1,idx));
+  const d=filtered[idx],c=BC[d.bc]||BC.gray,isKnown=known.has(key(d));
+  area.innerHTML=`
+    <div class="flash-card">
+      <div class="card-header">
+        <span class="badge" style="background:${c.bg};color:${c.text};border:1px solid ${c.bd}">${d.badge}</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${isKnown?'<span class="known-tag"><i class="ti ti-check" style="font-size:12px"></i>Known</span>':''}
+          <span class="card-num">${idx+1} / ${filtered.length}</span>
+        </div>
+      </div>
+      <div class="method-name">${d.method}</div>
+      <div><div class="field-label">Syntax</div><div class="syntax-box">${d.syntax}</div></div>
+      <div><div class="field-label">Example</div><div class="example-box">${d.example}</div></div>
+      <div><div class="field-label">SQL equivalent</div><div class="sql-box">${d.sql}</div></div>
+      <div class="actions">
+        <button class="btn btn-known ${isKnown?'is-known':''}" onclick="markKnown()">
+          <i class="ti ti-${isKnown?'x':'check'}"></i> ${isKnown?'Unmark':'Mark as known'}
+        </button>
+        <button class="btn btn-skip" onclick="move(1)"><i class="ti ti-arrow-right"></i> Skip</button>
+        <button class="btn btn-reset" onclick="resetKnown()" style="margin-left:auto"><i class="ti ti-refresh"></i> Reset</button>
+      </div>
+    </div>`;
+  document.getElementById('ctr').textContent=`${idx+1} / ${filtered.length}`;
+  document.getElementById('prevBtn').disabled=idx===0;
+  document.getElementById('nextBtn').disabled=idx===filtered.length-1;
+  updateProgress();
+}
+
+function markKnown(){
+  const k=key(filtered[idx]);
+  if(known.has(k)){known.delete(k);render();return;}
+  known.add(k);render();
+  setTimeout(()=>{if(idx<filtered.length-1)move(1);},350);
+}
+function resetKnown(){known.clear();render();}
+function move(dir){idx=Math.max(0,Math.min(filtered.length-1,idx+dir));render();}
+function updateProgress(){
+  const n=filtered.filter(d=>known.has(key(d))).length,t=filtered.length;
+  const pct=t?Math.round(n/t*100):0;
+  document.getElementById('pf').style.width=pct+'%';
+  document.getElementById('pt').textContent=`${n} / ${t} known`;
+  document.getElementById('hdr').textContent=`${known.size} / ${CARDS.length} known`;
+}
+function setCat(cat,btn){
+  activeCat=cat;
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilter();
+}
+function filterCards(){searchQ=document.getElementById('search').value.toLowerCase();applyFilter();}
+function applyFilter(){
+  filtered=CARDS.filter(d=>{
+    const cOk=activeCat==='all'||d.cat===activeCat;
+    const sOk=!searchQ||[d.method,d.syntax,d.example,d.sql,d.badge].some(s=>s.toLowerCase().includes(searchQ));
+    return cOk&&sOk;
+  });
+  idx=0;render();
+}
+
+/* ══ CHEAT SHEET ══ */
+function buildCheatSheet(){
+  const groups={crud:[],filter:[],query:[],agg:[],join:[],adv:[]};
+  CARDS.forEach(d=>{if(groups[d.cat])groups[d.cat].push(d);});
+  Object.entries(groups).forEach(([cat,cards])=>{
+    const el=document.getElementById('cg-'+cat);
+    if(!el)return;
+    el.innerHTML=cards.map(d=>{
+      const c=BC[d.bc]||BC.gray;
+      return `<div class="cheat-card">
+        <div class="cc-badge" style="background:${c.bg};color:${c.text};border:1px solid ${c.bd}">${d.badge}</div>
+        <div class="cc-method">${d.method}</div>
+        <div class="cc-syntax">${d.syntax}</div>
+        <div class="cc-sql">${d.sql}</div>
+      </div>`;
+    }).join('');
+  });
+}
+
+/* ══ FAQ ══ */
+const FAQS=[
+  {q:'`relation "users" does not exist` error',
+   a:`You haven't run migrations yet.\n<pre><code>npm run db:migrate\n# or in dev:\nnpm run db:push</code></pre>`},
+  {q:'TypeScript can\'t find types for my schema',
+   a:`Make sure <code>src/db/schema.ts</code> is in your <code>tsconfig.json</code> → <code>"include"</code> array. Import types from the schema file, not from <code>drizzle-orm</code> directly.`},
+  {q:'Should I use push or generate + migrate?',
+   a:`Use <code>push</code> during <strong>local development</strong> (fast, no migration files). Use <code>generate</code> + <code>migrate</code> for <strong>staging/production</strong> so migrations are version-controlled and auditable.`},
+  {q:'How do I handle undefined vs null in optional fields?',
+   a:`Drizzle uses <code>null</code> for nullable DB columns. If a column is <code>.notNull()</code> in the schema, TypeScript will enforce that you pass a value on insert.`},
+  {q:'How do I run raw SQL when Drizzle can\'t express my query?',
+   a:`<pre><code>import { sql } from "drizzle-orm";\n\nconst result = await db.execute(\n  sql\`SELECT id, name FROM users WHERE name ILIKE ${"%" + query + "%"}\`\n);</code></pre>`},
+  {q:'Connection pool exhausted in production',
+   a:`Tune your <code>Pool</code> settings in <code>src/db/index.ts</code>. Increase <code>max</code> for high-traffic apps, or consider PgBouncer as a connection pooler in front of PostgreSQL.`},
+  {q:'How do I seed the database?',
+   a:`Create <code>src/db/seed.ts</code> with your inserts, then run:\n<pre><code>npx tsx src/db/seed.ts</code></pre>\nOr add a script: <code>"db:seed": "tsx src/db/seed.ts"</code>`},
+  {q:'How do I enable SQL query logging?',
+   a:`<pre><code>export const db = drizzle(pool, {\n  schema,\n  logger: process.env.NODE_ENV === "development",\n});</code></pre>This prints every SQL query to the console during dev.`},
+  {q:'How do I open Drizzle Studio?',
+   a:`Run <code>npx drizzle-kit studio</code> (or <code>npm run db:studio</code>). Opens a browser UI at <code>http://localhost:4983</code> — browse tables, run queries, inspect data.`},
+  {q:'What is $inferSelect vs $inferInsert?',
+   a:`<code>$inferSelect</code> gives you the TypeScript type for rows returned by SELECT queries (all columns, including defaults). <code>$inferInsert</code> gives the type for INSERT input (required fields only, optional for columns with defaults). No need to write separate interfaces — Drizzle infers them directly from your schema.`},
+];
+
+function buildFAQ(){
+  document.getElementById('faqList').innerHTML=FAQS.map((f,i)=>`
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFAQ(${i},this)">
+        <span>${f.q}</span>
+        <i class="ti ti-chevron-down"></i>
+      </div>
+      <div class="faq-a" id="fa${i}">${f.a}</div>
+    </div>`).join('');
+}
+
+function toggleFAQ(i,el){
+  const a=document.getElementById('fa'+i);
+  const open=a.classList.toggle('open');
+  el.classList.toggle('open',open);
+}
+
+/* ══ TABS ══ */
+function showTab(name,btn){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+}
+
+/* ══ COPY CODE ══ */
+function copyCode(btn){
+  const code=btn.nextSibling.textContent;
+  navigator.clipboard.writeText(code).then(()=>{
+    btn.textContent='Copied!';btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied');},1800);
+  });
+}
+
+/* ══ INIT ══ */
+render();
+buildCheatSheet();
+buildFAQ();
+</script>
+</body>
+</html>
